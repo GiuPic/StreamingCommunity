@@ -11,6 +11,7 @@ from rich.console import Console
 from StreamingCommunity.Util.os import os_manager
 from StreamingCommunity.Util.message import start_message
 from StreamingCommunity.Lib.Downloader import HLS_Downloader
+from StreamingCommunity.TelegramHelp.telegram_bot import TelegramSession, get_bot_instance
 
 
 # Logic class
@@ -36,8 +37,20 @@ def download_film(select_title: MediaItem) -> str:
     Return:
         - str: output path
     """
+
+    if site_constant.TELEGRAM_BOT:
+        bot = get_bot_instance()
+
     start_message()
     console.print(f"[yellow]Download:  [red]{select_title.name} \n")
+
+    if site_constant.TELEGRAM_BOT:
+      bot.send_message(f"Download in corso:\nTitolo:{select_title.name}", None)
+
+      # Get script_id
+      script_id = TelegramSession.get_session()
+      if script_id != "unknown":
+          TelegramSession.updateScriptId(script_id, f"{select_title.name}")
 
     # Setup api manger
     video_source = VideoSource(select_title.url)
@@ -54,6 +67,14 @@ def download_film(select_title: MediaItem) -> str:
         m3u8_url=master_playlist, 
         output_path=os.path.join(mp4_path, title_name)
     ).start()
+
+    if site_constant.TELEGRAM_BOT:
+        bot.send_message(f"Finito di scaricare tutto", None)
+
+        # Get script_id
+        script_id = TelegramSession.get_session()
+        if script_id != "unknown":
+            TelegramSession.deleteScriptId(script_id)
 
     if r_proc['error'] is not None:
         try: os.remove(r_proc['path'])
