@@ -1,4 +1,4 @@
-# 09.06.24
+# 21.05.24
 
 from urllib.parse import quote_plus
 
@@ -10,19 +10,20 @@ from rich.prompt import Prompt
 
 # Internal utilities
 from StreamingCommunity.Api.Template import get_select_title
-from StreamingCommunity.Api.Template.config_loader import site_constant
 
 
 # Logic class
-from .site import title_search, media_search_manager, table_show_manager
+from StreamingCommunity.Api.Template.config_loader import site_constant
+from .site import title_search, table_show_manager, media_search_manager
+from .film import download_film
 from .series import download_series
 
 
 # Variable
-indice = 5
-_useFor = "serie"
+indice = 2
+_useFor = "film_serie"
 _deprecate = False
-_priority = 2
+_priority = 1
 _engineDownload = "hls"
 
 msg = Prompt()
@@ -33,25 +34,26 @@ def search(string_to_search: str = None, get_onylDatabase: bool = False):
     """
     Main function of the application for film and series.
     """
-
     if string_to_search is None:
         string_to_search = msg.ask(f"\n[purple]Insert word to search in [green]{site_constant.SITE_NAME}").strip()
-    
-    # Search on database
+
     len_database = title_search(quote_plus(string_to_search))
 
     # Return list of elements
     if get_onylDatabase:
         return media_search_manager
-
+    
     if len_database > 0:
 
         # Select title from list
         select_title = get_select_title(table_show_manager, media_search_manager)
-
-        # Download only film
-        download_series(select_title)
-
+        
+        if select_title.type == 'tv':
+            download_series(select_title)
+        
+        else:
+            download_film(select_title)
+    
     else:
         console.print(f"\n[red]Nothing matching was found for[white]: [purple]{string_to_search}")
 

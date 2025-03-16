@@ -52,7 +52,7 @@ class M3U8_Ts_Estimator:
         self.now_downloaded_size += size_download
         logging.debug(f"Current total downloaded size: {self.now_downloaded_size}")
 
-    def capture_speed(self, interval: float = 1):
+    def capture_speed(self, interval: float = 1.5):
         """Capture the internet speed periodically."""
         last_upload, last_download = 0, 0
         speed_buffer = deque(maxlen=3)
@@ -119,15 +119,15 @@ class M3U8_Ts_Estimator:
                 
                 retry_count = self.segments_instance.active_retries if self.segments_instance else 0
                 progress_str = (
-                    f"{Colors.GREEN}{number_file_total_size} {Colors.WHITE}< {Colors.RED}{units_file_total_size}"
-                    f"{Colors.WHITE} {Colors.CYAN}{average_internet_speed} {Colors.RED}{average_internet_unit}"
+                    f"{Colors.GREEN}{number_file_total_size} {Colors.RED}{units_file_total_size}"
+                    f"{Colors.WHITE}, {Colors.CYAN}{average_internet_speed} {Colors.RED}{average_internet_unit}"
                     f"{Colors.WHITE}, {Colors.GREEN}CRR {Colors.RED}{retry_count} "
                 )
                 
             else:
                 retry_count = self.segments_instance.active_retries if self.segments_instance else 0
                 progress_str = (
-                    f"{Colors.GREEN}{number_file_total_size} {Colors.WHITE}< {Colors.RED}{units_file_total_size}"
+                    f"{Colors.GREEN}{number_file_total_size} {Colors.RED}{units_file_total_size}"
                     f"{Colors.WHITE}, {Colors.GREEN}CRR {Colors.RED}{retry_count} "
                 )
             

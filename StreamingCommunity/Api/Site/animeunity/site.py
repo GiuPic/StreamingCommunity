@@ -12,13 +12,13 @@ from rich.console import Console
 
 # Internal utilities
 from StreamingCommunity.Util.config_json import config_manager
+from StreamingCommunity.Util.headers import get_userAgent
 from StreamingCommunity.Util.table import TVShowManager
 from StreamingCommunity.TelegramHelp.telegram_bot import get_bot_instance
 
 
 # Logic class
 from StreamingCommunity.Api.Template.config_loader import site_constant
-from StreamingCommunity.Api.Template.Util import search_domain
 from StreamingCommunity.Api.Template.Class.SearchType import MediaManager
 
 
@@ -29,7 +29,7 @@ table_show_manager = TVShowManager()
 max_timeout = config_manager.get_int("REQUESTS", "timeout")
 
 
-def get_token(site_name: str, domain: str) -> dict:
+def get_token() -> dict:
     """
     Function to retrieve session tokens from a specified website.
 
@@ -40,8 +40,6 @@ def get_token(site_name: str, domain: str) -> dict:
     Returns:
         - dict: A dictionary containing session tokens. The keys are 'XSRF_TOKEN', 'animeunity_session', and 'csrf_token'.
     """
-
-    # Send a GET request to the specified URL composed of the site name and domain
     response = httpx.get(
         url=site_constant.FULL_URL,
         timeout=max_timeout
@@ -50,17 +48,11 @@ def get_token(site_name: str, domain: str) -> dict:
 
     # Initialize variables to store CSRF token
     find_csrf_token = None
-    
-    # Parse the HTML response using BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
     
-    # Loop through all meta tags in the HTML response
     for html_meta in soup.find_all("meta"):
-
-        # Check if the meta tag has a 'name' attribute equal to "csrf-token"
         if html_meta.get('name') == "csrf-token":
 
-            # If found, retrieve the content of the meta tag, which is the CSRF token
             find_csrf_token = html_meta.get('content')
 
     logging.info(f"Extract: ('animeunity_session': {response.cookies['animeunity_session']}, 'csrf_token': {find_csrf_token})")
@@ -83,12 +75,11 @@ def get_real_title(record):
     Returns:
         - str: The title found in the record. If no title is found, returns None.
     """
-
-    if record['title'] is not None:
-        return record['title']
-    
-    elif record['title_eng'] is not None:
+    if record['title_eng'] is not None:
         return record['title_eng']
+    
+    elif record['title'] is not None:
+        return record['title']
     
     else:
         return record['title_it']
@@ -110,33 +101,14 @@ def title_search(title: str) -> int:
     media_search_manager.clear()
     table_show_manager.clear()
 
-    # Check if domain is working
-    domain_to_use, base_url = search_domain(site_constant.SITE_NAME, site_constant.FULL_URL)
-
-    if domain_to_use is None or base_url is None:
-        console.print("[bold red]Error: Unable to determine valid domain or base URL.[/bold red]")
-        console.print("[yellow]The service might be temporarily unavailable or the domain may have changed.[/yellow]")
-        sys.exit(1)
-    
-    data = get_token(site_constant.SITE_NAME, domain_to_use)
-
-    # Prepare cookies to be used in the request
-    cookies = {
-        'animeunity_session': data.get('animeunity_session')
-    }
-
-    # Prepare headers for the request
+    # Create parameter for request
+    data = get_token()
+    cookies = {'animeunity_session': data.get('animeunity_session')}
     headers = {
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
-        'content-type': 'application/json;charset=UTF-8',
+        'user-agent': get_userAgent(),
         'x-csrf-token': data.get('csrf_token')
     }
-
-    # Prepare JSON data to be sent in the request
-    json_data =  {
-        'title': title
-    }
+    json_data =  {'title': title}
 
     # Send a POST request to the API endpoint for live search
     try:
@@ -151,6 +123,7 @@ def title_search(title: str) -> int:
 
     except Exception as e:
         console.print(f"Site: {site_constant.SITE_NAME}, request search error: {e}")
+        return 0
 
     # Inizializza la lista delle scelte
     if site_constant.TELEGRAM_BOT:
@@ -167,8 +140,9 @@ def title_search(title: str) -> int:
                 'slug': dict_title.get('slug'),
                 'name': dict_title.get('name'),
                 'type': dict_title.get('type'),
-                'score': dict_title.get('score'),
-                'episodes_count': dict_title.get('episodes_count')
+                'status': dict_title.get('status'),
+                'episodes_count': dict_title.get('episodes_count'),
+                'plot': ' '.join((words := str(dict_title.get('plot', '')).split())[:10]) + ('...' if len(words) > 10 else '')
             })
 
             if site_constant.TELEGRAM_BOT:

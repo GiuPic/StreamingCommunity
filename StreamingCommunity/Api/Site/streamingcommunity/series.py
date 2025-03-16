@@ -50,10 +50,17 @@ def download_video(index_season_selected: int, index_episode_selected: int, scra
         - bool: kill handler status
     """
     start_message()
-    index_season_selected = dynamic_format_number(index_season_selected)
+    index_season_selected = dynamic_format_number(str(index_season_selected))
+
+    # SPECIAL: Get season number
+    season = None
+    for s in scrape_serie.seasons_manager.seasons:
+        if s.number == int(index_season_selected):
+            season = s
+            break
 
     # Get info about episode
-    obj_episode = scrape_serie.episode_manager.get(index_episode_selected - 1)
+    obj_episode = season.episodes.get(index_episode_selected - 1)
     console.print(f"[yellow]Download: [red]{index_season_selected}:{index_episode_selected} {obj_episode.name}")
     print()
 
@@ -100,14 +107,16 @@ def download_episode(index_season_selected: int, scrape_serie: GetSerieInfo, vid
         - index_season_selected (int): Index of the selected season.
         - download_all (bool): Download all episodes in the season.
     """
-
-    # Clean memory of all episodes and get the number of the season
-    scrape_serie.episode_manager.clear()
-
-    # Start message and collect information about episodes
     start_message()
     scrape_serie.collect_info_season(index_season_selected)
-    episodes_count = scrape_serie.episode_manager.length()
+    
+    # SPECIAL: Get season number
+    season = None
+    for s in scrape_serie.seasons_manager.seasons:
+        if s.number == index_season_selected:
+            season = s
+            break
+    episodes_count = len(season.episodes.episodes)
 
     if download_all:
 
@@ -123,7 +132,7 @@ def download_episode(index_season_selected: int, scrape_serie: GetSerieInfo, vid
     else:
 
         # Display episodes list and manage user selection
-        last_command = display_episodes_list(scrape_serie.episode_manager.episodes)
+        last_command = display_episodes_list(season.episodes.episodes)
         list_episode_select = manage_selection(last_command, episodes_count)
 
         try:
@@ -163,7 +172,7 @@ def download_series(select_season: MediaItem) -> None:
 
     # Collect information about seasons
     scrape_serie.collect_info_title()
-    seasons_count = scrape_serie.season_manager.seasons_count
+    seasons_count = len(scrape_serie.seasons_manager)
 
     # Prompt user for season selection and download episodes
     console.print(f"\n[green]Seasons found: [red]{seasons_count}")
@@ -176,7 +185,11 @@ def download_series(select_season: MediaItem) -> None:
 
         index_season_selected = bot.ask(
             "select_title_episode",
-            "Inserisci il numero della stagione (es. 1), * per scaricare tutte le stagioni, (es. 1-2) per un intervallo di stagioni, o (es. 3-*) per scaricare dalla stagione specificata fino alla fine",
+            "Menu di selezione delle stagioni\n\n"
+            "- Inserisci il numero della stagione (ad esempio, 1)\n"
+            "- Inserisci * per scaricare tutte le stagioni\n"
+            "- Inserisci un intervallo di stagioni (ad esempio, 1-2) per scaricare da una stagione all'altra\n"
+            "- Inserisci (ad esempio, 3-*) per scaricare dalla stagione specificata fino alla fine della serie",
             None
         )
 
@@ -197,14 +210,23 @@ def download_series(select_season: MediaItem) -> None:
 
     # Loop through the selected seasons and download episodes
     for i_season in list_season_select:
+
+        # SPECIAL: Get season number
+        season = None
+        for s in scrape_serie.seasons_manager.seasons:
+            if s.number == i_season:
+                season = s
+                break
+        season_number = season.number
+
         if len(list_season_select) > 1 or index_season_selected == "*":
 
             # Download all episodes if multiple seasons are selected or if '*' is used
-            download_episode(scrape_serie.season_manager.seasonsData.get_season_by_number(i_season-1).number, scrape_serie, video_source, download_all=True)
+            download_episode(season_number, scrape_serie, video_source, download_all=True)
         else:
 
             # Otherwise, let the user select specific episodes for the single season
-            download_episode(scrape_serie.season_manager.seasonsData.get_season_by_number(i_season-1).number, scrape_serie, video_source, download_all=False)
+            download_episode(season_number, scrape_serie, video_source, download_all=False)
 
     if site_constant.TELEGRAM_BOT:
         bot.send_message(f"Finito di scaricare tutte le serie e episodi", None)
