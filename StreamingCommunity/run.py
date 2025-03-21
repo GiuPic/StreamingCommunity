@@ -59,7 +59,7 @@ def load_search_functions():
     loaded_functions = {}
 
     # Lista dei siti da escludere se TELEGRAM_BOT è attivo
-    excluded_sites = {"cb01new", "ddlstreamitaly", "guardaserie", "ilcorsaronero", "mostraguarda"} if TELEGRAM_BOT else set()
+    excluded_sites = {"1337xx", "ddlstreamitaly", "guardaserie", "ilcorsaronero", "mostraguarda"} if TELEGRAM_BOT else set()
 
     # Find api home directory
     if getattr(sys, 'frozen', False):  # Modalità PyInstaller
@@ -305,7 +305,7 @@ def main(script_id = 0):
     ) + "[white])"
 
     if TELEGRAM_BOT:
-        
+
         # Display the category legend in a single line
         category_legend_str = "Categorie: \n" + " | ".join([
             f"{category.capitalize()}" for category in color_map.keys()
@@ -331,7 +331,7 @@ def main(script_id = 0):
     # Run the corresponding function based on user input
     if category in input_to_function:
         run_function(input_to_function[category], search_terms = args.search)
-        
+
     else:
 
         if TELEGRAM_BOT:

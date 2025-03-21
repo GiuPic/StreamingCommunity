@@ -19,6 +19,7 @@ from StreamingCommunity.Util.table import TVShowManager
 from StreamingCommunity.Api.Template.config_loader import site_constant
 from StreamingCommunity.Api.Template.Util import search_domain
 from StreamingCommunity.Api.Template.Class.SearchType import MediaManager
+from StreamingCommunity.TelegramHelp.telegram_bot import get_bot_instance
 
 
 # Variable
@@ -38,6 +39,9 @@ def title_search(word_to_search: str) -> int:
     Returns:
         - int: The number of titles found.
     """
+    if site_constant.TELEGRAM_BOT:
+        bot = get_bot_instance()
+
     media_search_manager.clear()
     table_show_manager.clear()
 
@@ -62,6 +66,10 @@ def title_search(word_to_search: str) -> int:
     # Create soup and find table
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # Inizializza la lista delle scelte
+    if site_constant.TELEGRAM_BOT:
+        choices = []
+
     for div in soup.find_all("div", class_ = "card-content"):
         try:
 
@@ -77,8 +85,18 @@ def title_search(word_to_search: str) -> int:
 
             media_search_manager.add_media(title_info)
 
+            if site_constant.TELEGRAM_BOT:
+
+                # Crea una stringa formattata per ogni scelta con numero
+                choice_text = f"{len(choices)} - {title_info.get('name')} ({title_info.get('desc')}) - url: {title_info.get('url')}"
+                choices.append(choice_text)
+
         except Exception as e:
             print(f"Error parsing a film entry: {e}")
+
+    if site_constant.TELEGRAM_BOT:
+        if choices:
+            bot.send_message(f"Lista dei risultati:", choices)
 
     # Return the number of titles found
     return media_search_manager.get_length()
