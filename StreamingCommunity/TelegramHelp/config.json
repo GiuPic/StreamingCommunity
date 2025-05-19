@@ -6,14 +6,14 @@
         "show_trending": true,
         "use_api": true,
         "not_close": false,
-        "telegram_bot": false,
+        "telegram_bot": true,
         "download_site_data": true,
         "validate_github_config": true
     },
     "OUT_FOLDER": {
-        "root_path": "Video",
-        "movie_folder_name": "Movie",
-        "serie_folder_name": "Serie",
+        "root_path": "/mnt/data/media/",
+        "movie_folder_name": "films",
+        "serie_folder_name": "serie_tv",
         "anime_folder_name": "Anime",
         "map_episode_name": "E%(episode)_%(episode_name)",
         "add_siteName": false
@@ -57,7 +57,6 @@
     "REQUESTS": {
         "verify": false,
         "timeout": 20,
-        "max_retry": 8,
-        "proxy": ""
+        "max_retry": 8
     }
 }

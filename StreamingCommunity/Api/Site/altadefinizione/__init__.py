@@ -27,7 +27,7 @@ indice = 2
 _useFor = "Film_&_Serie"
 _priority = 0
 _engineDownload = "hls"
-_deprecate = True
+_deprecate = False
 
 msg = Prompt()
 console = Console()
@@ -110,7 +110,7 @@ def search(string_to_search: str = None, get_onlyDatabase: bool = False, direct_
         bot = get_bot_instance()
         
     if len_database > 0:
-        select_title = get_select_title(table_show_manager, media_search_manager)
+        select_title = get_select_title(table_show_manager, media_search_manager, len_database)
         process_search_result(select_title, selections)
     
     else:

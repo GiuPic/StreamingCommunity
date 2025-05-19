@@ -21,12 +21,13 @@ from .series import download_series
 # Variable
 indice = 7
 _useFor = "Film_&_Serie"
-_priority = 10          # !!! MOLTO LENTO
+_priority = 0
 _engineDownload = "hls"
 _deprecate = False
 
 msg = Prompt()
 console = Console()
+proxy = None
 
 
 def get_user_input(string_to_search: str = None):
@@ -74,20 +75,25 @@ def search(string_to_search: str = None, get_onlyDatabase: bool = False, direct_
         select_title = MediaItem(**direct_item)
         process_search_result(select_title, selections) # DONT SUPPORT PROXY FOR NOW
         return
+    
+    # Check proxy if not already set
+    finder = ProxyFinder(site_constant.FULL_URL)
+    proxy = finder.find_fast_proxy()
 
     if string_to_search is None:
         string_to_search = msg.ask(f"\n[purple]Insert a word to search in [green]{site_constant.SITE_NAME}").strip()
     
+    # Perform search on the database using the obtained query
     finder = ProxyFinder(url=f"{site_constant.FULL_URL}/serie/euphoria/")
-    proxy, response_serie, _ = finder.find_fast_proxy()
-    len_database = title_search(string_to_search, [proxy, response_serie])
+    proxy = finder.find_fast_proxy()
+    len_database = title_search(string_to_search, proxy)
 
     # If only the database is needed, return the manager
     if get_onlyDatabase:
         return media_search_manager
     
     if len_database > 0:
-        select_title = get_select_title(table_show_manager, media_search_manager)
+        select_title = get_select_title(table_show_manager, media_search_manager,len_database)
         process_search_result(select_title, selections, proxy)
     
     else:

@@ -1,4 +1,4 @@
-# 02.07.24
+# 09.06.24
 
 from urllib.parse import quote_plus
 
@@ -16,26 +16,26 @@ from StreamingCommunity.Api.Template.Class.SearchType import MediaItem
 
 # Logic class
 from .site import title_search, media_search_manager, table_show_manager
-from .title import download_title
+from .film import download_film
 
 
 # Variable
-indice = 3
-_useFor = "Torrent"
+indice = -1
+_useFor = "Film"
 _priority = 0
-_engineDownload = "Torrent"
+_engineDownload = "mp4"
 _deprecate = True
 
-console = Console()
 msg = Prompt()
-
+console = Console()
 
 
 def process_search_result(select_title):
     """
     Handles the search result and initiates the download for either a film or series.
     """
-    download_title(select_title)
+    # !!! ADD TYPE DONT WORK FOR SERIE
+    download_film(select_title)
 
 def search(string_to_search: str = None, get_onlyDatabase: bool = False, direct_item: dict = None):
     """
@@ -54,17 +54,17 @@ def search(string_to_search: str = None, get_onlyDatabase: bool = False, direct_
     if string_to_search is None:
         string_to_search = msg.ask(f"\n[purple]Insert word to search in [green]{site_constant.SITE_NAME}").strip()
 
-    # Perform the database search
+    # Search on database
     len_database = title_search(quote_plus(string_to_search))
 
-    # If only the database is needed, return the manager
+    ## If only the database is needed, return the manager
     if get_onlyDatabase:
         return media_search_manager
-
+    
     if len_database > 0:
-        select_title = get_select_title(table_show_manager, media_search_manager, len_database)
-        download_title(select_title)
-
+        select_title = get_select_title(table_show_manager, media_search_manager,len_database)
+        process_search_result(select_title)
+        
     else:
 
         # If no results are found, ask again
